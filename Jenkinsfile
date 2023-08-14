@@ -26,7 +26,7 @@ pipeline {
         stage('required AWS Service') {
             steps{
                 // Change Directory to the required AWS Service
-                cd ${params.AWS_SERVICE}
+                cd "${params.AWS_SERVICE}"
             }
         }
 
