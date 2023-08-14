@@ -23,7 +23,7 @@ pipeline {
             }
         }
 
-        stage('Terraform') {
+        stage('Terraform init, plan, apply') {
             steps {
                 withCredentials([[
                     $class: 'AmazonWebServicesCredentialsBinding',
@@ -50,6 +50,31 @@ pipeline {
                                 '''
                 }
                 }
+            }
+        }
+
+        stage('Terraform Destroy') {
+            when {
+                expression {params.DESTROY == yes}
+            }
+            steps {
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: "aws-terraform",
+                    accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']] ){
+                             dir("${params.AWS_SERVICE}"){
+                                //Run Terraform commands
+                                sh '''
+                                aws configure set region eu-central-1
+                                aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+                                aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+                                
+                                echo "Initializing Terraform"
+                                terraform destroy -auto-approve
+                                '''
+                            }
+                    }
             }
         }
     }
