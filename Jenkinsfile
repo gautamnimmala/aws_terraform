@@ -11,7 +11,7 @@ pipeline {
                 // Install the specified Terraform version
                 sh "curl -LO https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip"
                 sh "unzip terraform_${TF_VERSION}_linux_amd64.zip"
-                sh "mv terraform /usr/local/bin/"
+                sh "sudo mv terraform /usr/local/bin/"
                 sh "terraform version"
             }
         }
