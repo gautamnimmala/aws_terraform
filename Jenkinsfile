@@ -55,7 +55,7 @@ pipeline {
 
         stage('Terraform Destroy') {
             when {
-                expression {params.DESTROY == yes}
+                expression { params.DESTROY.toLowerCase() == 'yes' }
             }
             steps {
                 withCredentials([[
@@ -70,7 +70,7 @@ pipeline {
                                 aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
                                 aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
                                 
-                                echo "Initializing Terraform"
+                                echo "Destroy Terraform"
                                 terraform destroy -auto-approve
                                 '''
                             }
