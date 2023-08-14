@@ -5,7 +5,7 @@ pipeline {
         TF_VERSION = '1.5.5' // Set the desired Terraform version
     }
 
-    stages {
+    stages { 
         stage('Install Terraform') {
             steps {
                 // Install the specified Terraform version
@@ -23,47 +23,42 @@ pipeline {
             }
         }
 
-        stage('required AWS Service') {
-            steps{
-                // Change Directory to the required AWS Service
-                cd AWS_TERRAFORM/"${params.AWS_SERVICE}"
-            }
-        }
-
-        stage('Terraform Init') {
+        stage('Terraform') {
             steps {
-                // Initialize the Terraform working directory
-                sh "terraform init"
-            }
-        }
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: "aws-terraform",
+                    accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']] ){
+                             dir("${params.AWS_SERVICE}"){
+                                //Run Terraform commands
+                                sh '''
+                                aws configure set region eu-central-1
+                                aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+                                aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+                                
+                                echo "Initializing Terraform"
+                                terraform init
 
-        stage('Terraform Plan') {
-            steps {
-                // Run Terraform plan and capture the output
-                sh "terraform plan -out=tfplan"
-            }
-        }
+                                echo "Planning terraform changes"
+                                terraform plan -out=AWS_VPC
 
-        stage('Terraform Apply') {
-            steps {
-                // Apply the Terraform plan
-                sh "terraform apply -auto-approve tfplan"
-            }
-        }
+                                echo "Applying Terraform changes"
+                                terraform apply -auto-approve AWS_VPC
 
-        stage('Terraform Destroy') {
-            steps {
-                // Destroy the created infrastructure (optional)
-                sh "terraform destroy -auto-approve"
+                                echo "Terrform deployment completed!"
+                                '''
+                }
+                }
             }
         }
     }
-
     post {
         always {
             // Clean up after execution
             sh "rm -f terraform_${TF_VERSION}_linux_amd64.zip"
-            sh "rm -f tfplan"
+            sh "rm -f AWS_VPC"
         }
     }
 }
+
